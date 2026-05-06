@@ -137,14 +137,15 @@ class CSJobScraper:
         except Exception as e:
             print(f"  ❌ Error searching USAJOBS: {e}")
 
-    def search_yc_startups(self, role='software-engineer'):
+    def search_yc_startups(self):
         """
         Search Y Combinator's Work at a Startup for startup developer jobs.
-        YC startups are vetted tech companies actively hiring.
+        Uses the main jobs page and company-specific job pages since
+        role-specific pages (/jobs/role/{role}) return 404.
         """
-        print(f"🔍 Searching YC Work at a Startup for '{role.replace('-', ' ')}'...")
+        print("🔍 Searching YC Work at a Startup...")
         try:
-            url = f'https://www.ycombinator.com/jobs/role/{role}'
+            url = 'https://www.ycombinator.com/jobs'
             response = self.session.get(url)
             response.raise_for_status()
 
@@ -292,23 +293,8 @@ class CSJobScraper:
         print("🔍 SEARCHING YC WORK AT A STARTUP (Startup Jobs)")
         print("="*60 + "\n")
 
-        yc_roles = [
-            'software-engineer',
-            'full-stack-engineer',
-            'backend-engineer',
-            'frontend-engineer',
-            'data-engineer',
-            'devops-engineer',
-            'machine-learning-engineer',
-            'ios-engineer',
-            'security-engineer',
-            'systems-engineer',
-        ]
-
-        for role in yc_roles:
-            self.search_yc_startups(role)
-            time.sleep(1)
-            print()
+        self.search_yc_startups()
+        print()
 
         # Additional tech job searches
         print("\n" + "="*60)
