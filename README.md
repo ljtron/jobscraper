@@ -4,7 +4,7 @@ A Python script to scrape job listings from multiple websites for entry-level so
 
 ## Features
 
-- Scrapes jobs from Indeed, Glassdoor, and Monster
+- Scrapes jobs from Github, USAJOBS, and YCcombinator
 - Searches for multiple relevant queries
 - Filters results based on keywords
 - Saves results to JSON file
@@ -15,6 +15,7 @@ A Python script to scrape job listings from multiple websites for entry-level so
 1. Install Python 3.7 or higher
 2. Install dependencies:
    ```bash
+   source venv/bin/activate
    pip install -r requirements.txt
    ```
 
@@ -22,21 +23,19 @@ A Python script to scrape job listings from multiple websites for entry-level so
 
 Run the script:
 ```bash
-python job_scraper.py
+python cs_it_job_scraper.py
 ```
 
 The script will:
 1. Search for predefined job queries across multiple sites
 2. Filter for relevant entry-level positions
-3. Display the first 20 results in the console
+3. Print out all of the results
 4. Save all results to `jobs.json`
 
 ## Customization
 
-- Modify the `queries` list in `main()` to change search terms
+- Modify the `queries` list in `search_all_cs_it_jobs()` to change search terms
 - Change the `location` variable for location-specific searches
-- Adjust filtering keywords in the `filter_jobs()` call
-- Increase `pages` parameter for more results (be mindful of rate limits)
 
 ## Important Notes
 
