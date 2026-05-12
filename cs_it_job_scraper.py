@@ -5,16 +5,35 @@ import os
 import re
 from datetime import datetime
 from bs4 import BeautifulSoup
+from MongoDriver import MongoDBClient
 
 class CSJobScraper:
     def __init__(self):
         """Initialize the CS/IT job scraper using free sources."""
         self.jobs = []
+        self.mongo_client = MongoDBClient()
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         })
 
+    def job_entry(self, title, company, location, salary, job_type, description, link, posted_date, source):
+        """Helper function to create a standardized job entry."""
+        return {
+            'title': title,
+            'company': company,
+            'location': location,
+            'salary': salary,
+            'job_type': job_type,
+            'description': description,  # Limit description to 500 chars
+            'link': link,
+            'posted_date': posted_date,
+            'source': source,
+            'applied': False,
+            'applied_date': None,
+            'notes': ''
+        }
+    
     def search_remit(self, query='software developer'):
         """
         Search using Remotive's free API (no API key needed).
@@ -34,17 +53,17 @@ class CSJobScraper:
 
                     # Filter for US locations only
                     if location and ('United States' in location or 'USA' in location or 'US' in location or 'Remote' in location):
-                        job_entry = {
-                            'title': job.get('title', ''),
-                            'company': job.get('company_name', ''),
-                            'location': location if location else 'Remote (US)',
-                            'salary': 'Not specified',
-                            'job_type': job.get('job_type', 'Remote'),
-                            'description': BeautifulSoup(job.get('description', ''), 'html.parser').get_text()[:500],
-                            'link': job.get('url', ''),
-                            'posted_date': job.get('publication_date', ''),
-                            'source': 'Remotive'
-                        }
+                        job_entry = self.job_entry(
+                            title=job.get('title', ''),
+                            company=job.get('company_name', ''),
+                            location=location if location else 'Remote (US)',
+                            salary='Not specified',
+                            job_type=job.get('job_type', 'Remote'),
+                            description=BeautifulSoup(job.get('description', ''), 'html.parser').get_text()[:500],
+                            link=job.get('url', ''),
+                            posted_date=job.get('publication_date', ''),
+                            source='Remotive'
+                        )
                         self.jobs.append(job_entry)
                         count += 1
                         print(f"  ✓ Found: {job_entry['title']} at {job_entry['company']}")
@@ -116,17 +135,17 @@ class CSJobScraper:
                     else:
                         salary = 'Not specified'
 
-                    job_entry = {
-                        'title': position,
-                        'company': agency,
-                        'location': loc,
-                        'salary': salary,
-                        'job_type': job_data.get('PositionSchedule', 'Full-time'),
-                        'description': job_data.get('PositionDescription', '')[:500],
-                        'link': link,
-                        'posted_date': job_data.get('PositionStartDate', ''),
-                        'source': 'USAJOBS'
-                    }
+                    job_entry = self.job_entry(
+                        title=position,
+                        company=agency,
+                        location=loc,
+                        salary=salary,
+                        job_type=job_data.get('PositionSchedule', 'Full-time'),
+                        description=job_data.get('PositionDescription', '')[:500],
+                        link=link,
+                        posted_date=job_data.get('PositionStartDate', ''),
+                        source='USAJOBS'
+                    )
                     self.jobs.append(job_entry)
                     count += 1
 
@@ -184,17 +203,17 @@ class CSJobScraper:
                 if location and not any(x in location.lower() for x in ['us', 'united states', 'remote', 'san francisco', 'new york', 'los angeles', 'boston', 'seattle', 'denver', 'chicago', 'austin', 'miami']):
                     continue
 
-                job_entry = {
-                    'title': title,
-                    'company': company,
-                    'location': location if location else 'US',
-                    'salary': salary,
-                    'job_type': job_type,
-                    'description': f'{title} at {company} - YC backed startup',
-                    'link': full_link,
-                    'posted_date': '',
-                    'source': 'YC Work at a Startup'
-                }
+                job_entry = self.job_entry(
+                    title=title,
+                    company=company,
+                    location=location if location else 'US',
+                    salary=salary,
+                    job_type=job_type,
+                    description=f'{title} at {company} - YC backed startup',
+                    link=full_link,
+                    posted_date='',
+                    source='YC Work at a Startup'
+                )
                 self.jobs.append(job_entry)
                 count += 1
                 print(f"  ✓ Found: {title} at {company}")
@@ -220,17 +239,17 @@ class CSJobScraper:
                 count = 0
                 if isinstance(data, list):
                     for job in data[:50]:
-                        job_entry = {
-                            'title': job.get('title', ''),
-                            'company': job.get('company', ''),
-                            'location': job.get('location', 'US'),
-                            'salary': job.get('salary', 'Not specified'),
-                            'job_type': job.get('type', 'Not specified'),
-                            'description': str(job.get('description', ''))[:500],
-                            'link': job.get('url', ''),
-                            'posted_date': job.get('posted_at', ''),
-                            'source': 'TechJobs'
-                        }
+                        job_entry = self.job_entry(
+                            title=job.get('title', ''),
+                            company=job.get('company', ''),
+                            location=job.get('location', 'US'),
+                            salary=job.get('salary', 'Not specified'),
+                            job_type=job.get('type', 'Not specified'),
+                            description=str(job.get('description', ''))[:500],
+                            link=job.get('url', ''),
+                            posted_date=job.get('posted_at', ''),
+                            source='TechJobs'
+                        )
                         self.jobs.append(job_entry)
                         count += 1
 
